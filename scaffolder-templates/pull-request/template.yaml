@@ -17,12 +17,8 @@ spec:
           title: Name
           type: string
           description: Unique name of the component
-          ui:autofocus: true
-          ui:options:
-            rows: 5
-            catalogFilter:
-              - kind: Component
           ui:field: EntityValuePicker
+          ui:autofocus: true
         description:
           title: Description
           type: string
