@@ -17,8 +17,12 @@ spec:
           title: Name
           type: string
           description: Unique name of the component
-          ui:field: EntityValuePicker
           ui:autofocus: true
+          ui:options:
+            rows: 5
+            catalogFilter:
+              - kind: Component
+          ui:field: EntityPicker
         description:
           title: Description
           type: string
@@ -44,11 +48,7 @@ spec:
       name: Fetch Base
       action: fetch:template
       input:
-        url: ./template
-        values:
-          name: ${{parameters.name}}
-
-    - id: fetch-docs
+        url: ./templatede
       name: Fetch Docs
       action: fetch:plain
       input:
