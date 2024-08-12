@@ -22,7 +22,7 @@ spec:
             rows: 5
             catalogFilter:
               - kind: Component
-          ui:field: EntityPicker
+          ui:field: EntityValuePicker
         description:
           title: Description
           type: string
