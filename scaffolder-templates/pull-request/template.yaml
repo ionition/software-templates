@@ -18,11 +18,13 @@ spec:
           type: string
           description: Unique name of the component
           ui:autofocus: true
+          ui:field: EntityValuePicker
           ui:options:
             rows: 5
             catalogFilter:
               - kind: Component
-          ui:field: EntityValuePicker
+            fieldOptionValue: spec.type
+            fieldOptionTitle: metadata.name
         description:
           title: Description
           type: string
