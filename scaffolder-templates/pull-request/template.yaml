@@ -24,7 +24,7 @@ spec:
             catalogFilter:
               - kind: Component
             fieldOptionValue: spec.owner
-            fieldOptionTitle: spec.type
+            fieldOptionTitle: metadata.name
         description:
           title: Description
           type: string
