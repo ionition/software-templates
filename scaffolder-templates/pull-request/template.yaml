@@ -23,8 +23,8 @@ spec:
             rows: 5
             catalogFilter:
               - kind: Component
-            fieldOptionValue: metadata.name
-            fieldOptionTitle: spec.owner
+            fieldOptionValue: spec.owner
+            fieldOptionTitle: spec.type
         description:
           title: Description
           type: string
