@@ -24,6 +24,7 @@ spec:
             catalogFilter:
               - kind: Component
             fieldOptionValue: spec.owner
+            allowArbitraryValues: false
         description:
           title: Description
           type: string
