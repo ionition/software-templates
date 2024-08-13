@@ -23,7 +23,7 @@ spec:
             rows: 5
             catalogFilter:
               - kind: Component
-            # fieldOptionValue: spec.owner
+            fieldOptionValue: spec.owner
         description:
           title: Description
           type: string
