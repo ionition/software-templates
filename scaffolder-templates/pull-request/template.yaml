@@ -25,6 +25,7 @@ spec:
               - kind: Component
             fieldOptionValue: spec.owner
             allowArbitraryValues: false
+            optionsLabelVariant: primaryTitle
         description:
           title: Description
           type: string
