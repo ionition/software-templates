@@ -1,0 +1,181 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: test
+  title: Test
+spec:
+  owner: administrator
+  type: platform.digando.io
+  parameters:
+  - title: ControlPlane parameters
+    type: object
+    properties:
+      metadata:
+        type: object
+        title: ControlPlane parameters
+        properties:
+          name:
+            title: Name
+            type: string
+          environment:
+            title: Environment
+            type: string
+            ui:field: EntityValuePicker
+            ui:options:
+              optionValuePath: metadata.name
+              optionLabelVariant: primaryTitle
+              catalogFilter:
+                - kind: Environment
+  - title: Advanced
+    type: object
+    properties:
+      advanced:
+        type: object
+        properties:
+          dbRootPassword:
+            default: postgresql
+            type: string
+            title: Db Root Password
+          deletionPolicy:
+            default: Orphan
+            enum:
+              - Orphan
+              - Delete
+            type: string
+            title: Deletion Policy
+          nodeCount:
+            default: 1
+            type: integer
+            title: Node Count
+          nodeType:
+            default: n1-standard-4
+            type: string
+            title: Node Type
+        title: Advanced
+  - title: Project
+    type: object
+    properties:
+      project:
+        type: object
+        description: Google Cloud Project where Control Plane deployed.
+        properties:
+          settings:
+            properties:
+              location:
+                type: string
+                title: Location
+              projectId:
+                type: string
+                title: Project Id
+              region:
+                type: string
+                title: Region
+            required:
+              - projectId
+              - location
+              - region
+            type: object
+            title: Settings
+          status:
+            properties:
+              gcpProviderConfigRef:
+                properties:
+                  name:
+                    type: string
+                    title: Name
+                required:
+                  - name
+                type: object
+                title: Gcp Provider Config Ref
+            requried:
+              - gcpProviderConfigRef
+            type: object
+            title: Status
+        required:
+          - settings
+        title: Project
+        ui:field: EntityObjectPicker
+        ui:options:
+          catalogFilter:
+            - kind: System
+  - title: Settings
+    type: object
+    properties:
+      settings:
+        type: object
+        properties:
+          adminPassword:
+            description: Auth server admin temporary password.
+            title: Admin password
+            type: string
+          clientPassword:
+            description: Dashboard client password.
+            title: Client password
+            type: string
+          domain:
+            description: Control Plane dashboard domain.
+            title: Domain
+            type: string
+          userPassword:
+            description: Dashboard default user password.
+            title: User password
+            type: string
+        required:
+          - domain
+          - adminPassword
+          - clientPassword
+          - userPassword
+        title: Settings
+steps:
+  - id: manifest
+    name: Create Manifest
+    action: catalog:write
+    input:
+      entity:
+        apiVersion: platform.digando.io/v1alpha1
+        kind: ControlPlane
+        metadata:
+          name: ${{ parameters.metadata.name }}
+          annotations:
+            backstage.io/entity-relations: '["${{ parameters.project.spec.object.metadata.uid }}"]'
+            backstage.io/title: ${{ parameters.metadata.name }}
+            argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+        spec:
+          advanced:
+            dbRootPassword: ${{ parameters.advanced.dbRootPassword }}
+            deletionPolicy: ${{ parameters.advanced.deletionPolicy }}
+            nodeCount: ${{ parameters.advanced.nodeCount }}
+            nodeType: ${{ parameters.advanced.nodeType }}
+          project:
+            settings:
+              location: ${{ parameters.project.settings.location }}
+              projectId: ${{ parameters.project.settings.projectId }}
+              region: ${{ parameters.project.settings.region }}
+            status:
+              gcpProviderConfigRef:
+                name: ${{ parameters.project.status.gcpProviderConfigRef |
+                  pick('spec.object.metadata.name') }}
+          settings:
+            adminPassword: ${{ parameters.settings.adminPassword }}
+            clientPassword: ${{ parameters.settings.clientPassword }}
+            domain: ${{ parameters.settings.domain }}
+            userPassword: ${{ parameters.settings.userPassword }}
+      filePath: ${{ parameters.metadata.name }}.ControlPlane.platform.digando.io.v1alpha1.manifest.yaml
+  - id: publish
+    name: Publish
+    action: publish:github:pull-request
+    input:
+      allowedHosts:
+        - github.com
+      title: Add new platform.digando.io/ControlPlane ${{ parameters.metadata.name }}
+      repoUrl: github.com?owner=web-seven&repo=test
+      description: Requesting add resource from group platform.digando.io of kind
+        ControlPlane named ${{ parameters.metadata.name }}
+      branchName: resource-platform.digando.io-ControlPlane-${{ parameters.metadata.name }}
+      targetBranchName: environment-${{ parameters.metadata.environment}}
+      targetPath: environments/${{ parameters.metadata.environment }}
+      update: true
+output:
+  text:
+    - title: More information
+      content: ${{ steps['publish'].output.remoteUrl }}
