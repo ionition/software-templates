@@ -1,181 +1,74 @@
 apiVersion: scaffolder.backstage.io/v1beta3
+# https://backstage.io/docs/features/software-catalog/descriptor-format#kind-template
 kind: Template
 metadata:
-  name: test
-  title: Test
+  name: example-nodejs-template
+  title: Example Node.js Template
+  description: An example template for the scaffolder that creates a simple Node.js service
 spec:
-  owner: administrator
-  type: platform.digando.io
+  owner: user:guest
+  type: service
+
+  # These parameters are used to generate the input form in the frontend, and are
+  # used to gather input data for the execution of the template.
   parameters:
-  - title: ControlPlane parameters
-    type: object
-    properties:
-      metadata:
-        type: object
-        title: ControlPlane parameters
-        properties:
-          name:
-            title: Name
-            type: string
-          environment:
-            title: Environment
-            type: string
-            ui:field: EntityValuePicker
-            ui:options:
-              optionValuePath: metadata.name
-              optionLabelVariant: primaryTitle
-              catalogFilter:
-                - kind: Environment
-  - title: Advanced
-    type: object
-    properties:
-      advanced:
-        type: object
-        properties:
-          dbRootPassword:
-            default: postgresql
-            type: string
-            title: Db Root Password
-          deletionPolicy:
-            default: Orphan
-            enum:
-              - Orphan
-              - Delete
-            type: string
-            title: Deletion Policy
-          nodeCount:
-            default: 1
-            type: integer
-            title: Node Count
-          nodeType:
-            default: n1-standard-4
-            type: string
-            title: Node Type
-        title: Advanced
-  - title: Project
-    type: object
-    properties:
-      project:
-        type: object
-        description: Google Cloud Project where Control Plane deployed.
-        properties:
-          settings:
-            properties:
-              location:
-                type: string
-                title: Location
-              projectId:
-                type: string
-                title: Project Id
-              region:
-                type: string
-                title: Region
-            required:
-              - projectId
-              - location
-              - region
-            type: object
-            title: Settings
-          status:
-            properties:
-              gcpProviderConfigRef:
-                properties:
-                  name:
-                    type: string
-                    title: Name
-                required:
-                  - name
-                type: object
-                title: Gcp Provider Config Ref
-            requried:
-              - gcpProviderConfigRef
-            type: object
-            title: Status
-        required:
-          - settings
-        title: Project
-        ui:field: EntityObjectPicker
-        ui:options:
-          catalogFilter:
-            - kind: System
-  - title: Settings
-    type: object
-    properties:
-      settings:
-        type: object
-        properties:
-          adminPassword:
-            description: Auth server admin temporary password.
-            title: Admin password
-            type: string
-          clientPassword:
-            description: Dashboard client password.
-            title: Client password
-            type: string
-          domain:
-            description: Control Plane dashboard domain.
-            title: Domain
-            type: string
-          userPassword:
-            description: Dashboard default user password.
-            title: User password
-            type: string
-        required:
-          - domain
-          - adminPassword
-          - clientPassword
-          - userPassword
-        title: Settings
-steps:
-  - id: manifest
-    name: Create Manifest
-    action: catalog:write
-    input:
-      entity:
-        apiVersion: platform.digando.io/v1alpha1
-        kind: ControlPlane
-        metadata:
-          name: ${{ parameters.metadata.name }}
-          annotations:
-            backstage.io/entity-relations: '["${{ parameters.project.spec.object.metadata.uid }}"]'
-            backstage.io/title: ${{ parameters.metadata.name }}
-            argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-        spec:
-          advanced:
-            dbRootPassword: ${{ parameters.advanced.dbRootPassword }}
-            deletionPolicy: ${{ parameters.advanced.deletionPolicy }}
-            nodeCount: ${{ parameters.advanced.nodeCount }}
-            nodeType: ${{ parameters.advanced.nodeType }}
-          project:
-            settings:
-              location: ${{ parameters.project.settings.location }}
-              projectId: ${{ parameters.project.settings.projectId }}
-              region: ${{ parameters.project.settings.region }}
-            status:
-              gcpProviderConfigRef:
-                name: ${{ parameters.project.status.gcpProviderConfigRef |
-                  pick('spec.object.metadata.name') }}
-          settings:
-            adminPassword: ${{ parameters.settings.adminPassword }}
-            clientPassword: ${{ parameters.settings.clientPassword }}
-            domain: ${{ parameters.settings.domain }}
-            userPassword: ${{ parameters.settings.userPassword }}
-      filePath: ${{ parameters.metadata.name }}.ControlPlane.platform.digando.io.v1alpha1.manifest.yaml
-  - id: publish
-    name: Publish
-    action: publish:github:pull-request
-    input:
-      allowedHosts:
-        - github.com
-      title: Add new platform.digando.io/ControlPlane ${{ parameters.metadata.name }}
-      repoUrl: github.com?owner=web-seven&repo=test
-      description: Requesting add resource from group platform.digando.io of kind
-        ControlPlane named ${{ parameters.metadata.name }}
-      branchName: resource-platform.digando.io-ControlPlane-${{ parameters.metadata.name }}
-      targetBranchName: environment-${{ parameters.metadata.environment}}
-      targetPath: environments/${{ parameters.metadata.environment }}
-      update: true
-output:
-  text:
-    - title: More information
-      content: ${{ steps['publish'].output.remoteUrl }}
+    - title: Fill in some steps
+      required:
+        - name
+      properties:
+        name:
+          title: Name
+          type: string
+          description: Unique name of the component
+          ui:autofocus: true
+          ui:options:
+            rows: 5
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+
+  # These steps are executed in the scaffolder backend, using data that we gathered
+  # via the parameters above.
+  steps:
+    # Each step executes an action, in this case one templates files into the working directory.
+    - id: fetch-base
+      name: Fetch Base
+      action: fetch:template
+      input:
+        url: ./content
+        values:
+          name: ${{ parameters.name }}
+
+    # This step publishes the contents of the working directory to GitHub.
+    - id: publish
+      name: Publish
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: This is ${{ parameters.name }}
+        repoUrl: ${{ parameters.repoUrl }}
+
+    # The final step is to register our new component in the catalog.
+    - id: register
+      name: Register
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
+
+  # Outputs are displayed to the user after a successful execution of the template.
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps['publish'].output.remoteUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps['register'].output.entityRef }}

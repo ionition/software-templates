@@ -1,0 +1,12 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name | dump }}
+  namespace: default
+  annotations:
+    backstage.io/created-by-template: default/example-nodejs-template
+    backstage.io/edit-url: /scaffolder-extensions/entity/edit-by-template/component/default/${{ values.name }}
+spec:
+  type: service
+  owner: user:guest
+  lifecycle: experimental
